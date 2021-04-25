@@ -12,6 +12,9 @@ const int dirpin = 4;
 const int steppin = 3;
 float temperature;
 float lux;
+const int MS1=8;
+const int MS2=9;
+const int MS3=10;
 
 BMx280TwoWire bmx280(&Wire, I2C_ADDRESS);
 BH1750 lightMeter;
@@ -27,6 +30,8 @@ void setup() {
   pinMode(steppin, OUTPUT);
   pinMode(5, INPUT_PULLUP);
   pinMode(6, INPUT_PULLUP);
+  pinMode(MS1, OUTPUT);
+  digitalWrite(MS1, HIGH)
   while (!Serial);
   Wire.begin();
   //begin() checks the Interface, reads the sensor ID (to differentiate between BMP280 and BME280)
