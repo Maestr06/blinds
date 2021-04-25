@@ -10,17 +10,20 @@
 int stepCount = 0;  // number of steps the motor has taken
 const int dirpin = 4;
 const int steppin = 3;
+float temperature;
+float lux;
 
 BMx280TwoWire bmx280(&Wire, I2C_ADDRESS);
+BH1750 lightMeter;
 void light_read(); //checking current lux value
 void temp_read(); //checking current temp
-void left()
-void right()
+void left();
+void right();
 
 
 void setup() {
   Serial.begin(9600);
-   pinMode(dirpin, OUTPUT);
+  pinMode(dirpin, OUTPUT);
   pinMode(steppin, OUTPUT);
   pinMode(5, INPUT_PULLUP);
   pinMode(6, INPUT_PULLUP);
@@ -45,7 +48,10 @@ void setup() {
   Serial.println(F("BH1750 One-Time Test"));
 }
 
-void loop() {   
+void loop() {  
+  temp_read();
+  light_read(); 
+
 }
 
 void light_read() {
@@ -54,12 +60,10 @@ void light_read() {
     yield();
   }
   float lux = lightMeter.readLightLevel();
-  Serial.print("Light: ");
-  Serial.print(lux);
-  Serial.println(" lx");
+  Serial.print("Light: "); Serial.print(lux); Serial.println(" lx");
 }
 
-void temp_read{
+void temp_read(){
 if (!bmx280.measure())
   {
     Serial.println("could not start measurement, is a measurement already running?");
@@ -71,6 +75,7 @@ if (!bmx280.measure())
   } while (!bmx280.hasValue());
 
   Serial.print("Temperature: "); Serial.println(bmx280.getTemperature());
+  temperature = bmx280.getTemperature();
 }  
 
 void right() {
@@ -91,3 +96,4 @@ void left() {
     digitalWrite(steppin,LOW); 
     delayMicroseconds(1000);
   }
+}
