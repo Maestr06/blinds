@@ -2,21 +2,27 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include <BMx280TwoWire.h>
+#include <BH1750.h>
 #define I2C_ADDRESS 0x76
 
-const int stepsPerRevolution = 2048;  // change this to fit the number of steps per revolution
-// for your motor
-// initialize the stepper library on pins 8 through 11:
-Stepper myStepper(stepsPerRevolution, 8, 10, 9, 11);
+
 
 int stepCount = 0;  // number of steps the motor has taken
+const int dirpin = 4;
+const int steppin = 3;
 
 BMx280TwoWire bmx280(&Wire, I2C_ADDRESS);
+void light_read(); //checking current lux value
+void temp_read(); //checking current temp
+void left()
+void right()
+
 
 void setup() {
   Serial.begin(9600);
-  myStepper.setSpeed(14);
-  pinMode(7, INPUT_PULLUP);
+   pinMode(dirpin, OUTPUT);
+  pinMode(steppin, OUTPUT);
+  pinMode(5, INPUT_PULLUP);
   pinMode(6, INPUT_PULLUP);
   while (!Serial);
   Wire.begin();
@@ -34,10 +40,27 @@ void setup() {
   if (bmx280.isBME280()){
     bmx280.writeOversamplingHumidity(BMx280MI::OSRS_H_x16);
   }
+  lightMeter.begin(BH1750::ONE_TIME_HIGH_RES_MODE);
+
+  Serial.println(F("BH1750 One-Time Test"));
 }
 
-void loop() {
-  if (!bmx280.measure())
+void loop() {   
+}
+
+void light_read() {
+  lightMeter.configure(BH1750::ONE_TIME_HIGH_RES_MODE);
+  while (!lightMeter.measurementReady(true)) {
+    yield();
+  }
+  float lux = lightMeter.readLightLevel();
+  Serial.print("Light: ");
+  Serial.print(lux);
+  Serial.println(" lx");
+}
+
+void temp_read{
+if (!bmx280.measure())
   {
     Serial.println("could not start measurement, is a measurement already running?");
     return;
@@ -46,21 +69,25 @@ void loop() {
   {
     delay(100);
   } while (!bmx280.hasValue());
-  int sz = digitalRead(6);
-  int si = digitalRead(7);
-  Serial.println(digitalRead(6));
-  
-  
+
   Serial.print("Temperature: "); Serial.println(bmx280.getTemperature());
-  if (bmx280.getTemperature() > 25) {
-    myStepper.step(-2048*5);
-    }
-  if (si == LOW) {
-    myStepper.step(-512);
-  }
-  // delay(10000);
-  if (sz == LOW) {
-    myStepper.step(512);
-    Serial.println("dupa");
+}  
+
+void right() {
+  digitalWrite(dirpin, LOW);
+  while(digitalRead(5) == LOW) {
+    digitalWrite(steppin,HIGH); 
+    delayMicroseconds(1000); 
+    digitalWrite(steppin,LOW); 
+    delayMicroseconds(1000);
   }
 }
+
+void left() {
+  digitalWrite(dirpin, HIGH);
+  while(digitalRead(6) == LOW) {
+    digitalWrite(steppin,HIGH); 
+    delayMicroseconds(1000); 
+    digitalWrite(steppin,LOW); 
+    delayMicroseconds(1000);
+  }
