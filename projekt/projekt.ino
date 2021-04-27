@@ -74,26 +74,32 @@ void loop() {
   turn_right();
   turn_left();
   switch_mode();
+  pos_check();
   if (autonomy == true){
     if (lux >= 200 && closed == true && temp_closed == false) {
       rotate('l', 7);
       closed = false;
+      motor_pos = 7;
     }
     else if (lux < 200 && closed == false && temp_closed == false) {
       rotate('r', 7);
       closed = true;
+      motor_pos = 0;
     }
     else if (lux < 200 && closed == false && temp_closed == true) {
       rotate('r', 10);
       closed = false;
+      motor_pos = 0;
     }
     else if (temperature >= 26 && closed == false && temp_closed == false) {
       rotate('l', 3);
       temp_closed = true;
+      motor_pos = 10;
     }
     else if (temperature < 26 && closed == false && temp_closed == true) {
       rotate('r', 3);
       temp_closed = false;
+      motor_pos = 7;
     }
   }
 }
@@ -145,7 +151,7 @@ void turn_right() {
       Serial.println("Granica zakresu!!!");
     }
      else {
-      rotate(right, rotation);
+      rotate('r', 1);
       motor_pos--;
       autonomy = false;
     }
@@ -158,7 +164,7 @@ void turn_left() {
       Serial.println("Granica zakresu!!!");
     }
      else {
-      rotate(left, rotation);
+      rotate('l', 1);
       motor_pos++;
       autonomy = false;
     }
@@ -186,10 +192,14 @@ void switch_mode() {
       autonomy = true;
       if (motor_pos > 7){
         rotate('r', motor_pos - 7);
+        motor_pos = 7;
       }
       else if ( motor_pos < 7){
         rotate('l', 7 - motor_pos);
+        motor_pos = 7;
       }
     }
+    
   }
+  delay(50);
 }
