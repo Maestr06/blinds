@@ -140,22 +140,14 @@ void rotate(char rotate_dir, int rotations) {
 
 void turn_right() {
   while(digitalRead(5) == LOW) {
-    digitalWrite(dirpin, LOW);
-    digitalWrite(steppin,HIGH); 
-    delayMicroseconds(speedofmotor); 
-    digitalWrite(steppin,LOW); 
-    delayMicroseconds(speedofmotor);
+    rotate(right, rotation);
     autonomy = false;
   }
 }
 
 void turn_left() {
-  while(digitalRead(6) == LOW) {
-    digitalWrite(dirpin, HIGH);
-    digitalWrite(steppin,HIGH); 
-    delayMicroseconds(speedofmotor); 
-    digitalWrite(steppin,LOW); 
-    delayMicroseconds(speedofmotor);
+  if(digitalRead(6) == LOW) {
+    rotate(left, rotation);
     autonomy = false;
   }
 }
