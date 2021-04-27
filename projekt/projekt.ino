@@ -21,6 +21,7 @@ const int MS2=9;
 const int MS3=10;
 const int speedofmotor = 60;
 const unsigned int rotation = 6400; // steps for one rotation on 1/32 microstep mode
+unsigned int motor_pos = 0;
 
 BMx280TwoWire bmx280(&Wire, I2C_ADDRESS);
 BH1750 lightMeter;
@@ -139,18 +140,42 @@ void rotate(char rotate_dir, int rotations) {
 }
 
 void turn_right() {
-  while(digitalRead(5) == LOW) {
-    rotate(right, rotation);
-    autonomy = false;
+  if (digitalRead(5) == LOW) {
+    if (motor_pos == 0)  {
+      Serial.println("Granica zakresu!!!");
+    }
+     else {
+      rotate(right, rotation);
+      motor_pos--;
+      autonomy = false;
+    }
   }
 }
 
 void turn_left() {
-  if(digitalRead(6) == LOW) {
-    rotate(left, rotation);
-    autonomy = false;
+  if (digitalRead(6) == LOW) {
+    if (motor_pos == 13){
+      Serial.println("Granica zakresu!!!");
+    }
+     else {
+      rotate(left, rotation);
+      motor_pos++;
+      autonomy = false;
+    }
   }
 }
+void pos_check() {
+  if (motor_pos == 7){
+    closed = false;
+  }
+  else if (motor_pos == 10){
+    temp_closed = true;
+  }
+  else{
+    temp_closed = false;
+  }
+}
+
 
 void switch_mode() {
   if(digitalRead(autopin) == LOW) {
@@ -159,6 +184,12 @@ void switch_mode() {
     }
     else if (autonomy == false){
       autonomy = true;
+      if (motor_pos > 7){
+        rotate('r', motor_pos - 7);
+      }
+      else if ( motor_pos < 7){
+        rotate('l', 7 - motor_pos);
+      }
     }
   }
 }
