@@ -7,11 +7,13 @@
 
 bool closed = true;
 bool temp_closed = false;
+bool autonomy = true;
 const char left = 'l';
 const char right = 'r';
 int stepCount = 0;  // number of steps the motor has taken
 const int dirpin = 4; //HIGH is left rotation, LOW is right rotation
 const int steppin = 3;
+const int autopin = 11;
 float temperature = 20;
 float lux;
 const int MS1=8;
@@ -36,6 +38,7 @@ void setup() {
   pinMode(steppin, OUTPUT);
   pinMode(5, INPUT_PULLUP);
   pinMode(6, INPUT_PULLUP);
+  pinMode(autopin, INPUT_PULLUP);
   pinMode(MS1, OUTPUT);
   pinMode(MS2, OUTPUT);
   pinMode(MS3, OUTPUT);
@@ -69,25 +72,28 @@ void loop() {
   light_read();
   turn_right();
   turn_left();
-  if (lux >= 200 && closed == true && temp_closed == false) {
-    rotate('l', 7);
-    closed = false;
-  }
-  else if (lux < 200 && closed == false && temp_closed == false) {
-    rotate('r', 7);
-    closed = true;
-  }
-  else if (lux < 200 && closed == false && temp_closed == true) {
-    rotate('r', 10);
-    closed = false;
-  }
-  else if (temperature >= 26 && closed == false && temp_closed == false) {
-    rotate('l', 3);
-    temp_closed = true;
-  }
-  else if (temperature < 26 && closed == false && temp_closed == true) {
-    rotate('r', 3);
-    temp_closed = false;
+  switch_mode();
+  if (autonomy == true){
+    if (lux >= 200 && closed == true && temp_closed == false) {
+      rotate('l', 7);
+      closed = false;
+    }
+    else if (lux < 200 && closed == false && temp_closed == false) {
+      rotate('r', 7);
+      closed = true;
+    }
+    else if (lux < 200 && closed == false && temp_closed == true) {
+      rotate('r', 10);
+      closed = false;
+    }
+    else if (temperature >= 26 && closed == false && temp_closed == false) {
+      rotate('l', 3);
+      temp_closed = true;
+    }
+    else if (temperature < 26 && closed == false && temp_closed == true) {
+      rotate('r', 3);
+      temp_closed = false;
+    }
   }
 }
 
@@ -133,21 +139,34 @@ void rotate(char rotate_dir, int rotations) {
 }
 
 void turn_right() {
-  digitalWrite(dirpin, LOW);
   while(digitalRead(5) == LOW) {
+    digitalWrite(dirpin, LOW);
     digitalWrite(steppin,HIGH); 
     delayMicroseconds(speedofmotor); 
     digitalWrite(steppin,LOW); 
     delayMicroseconds(speedofmotor);
+    autonomy = false;
   }
 }
 
 void turn_left() {
-  digitalWrite(dirpin, HIGH);
   while(digitalRead(6) == LOW) {
+    digitalWrite(dirpin, HIGH);
     digitalWrite(steppin,HIGH); 
     delayMicroseconds(speedofmotor); 
     digitalWrite(steppin,LOW); 
     delayMicroseconds(speedofmotor);
+    autonomy = false;
+  }
+}
+
+void switch_mode() {
+  if(digitalRead(autopin) == LOW) {
+    if (autonomy == true){
+      autonomy = false;
+    }
+    else if (autonomy == false){
+      autonomy = true;
+    }
   }
 }
