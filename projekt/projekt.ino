@@ -5,6 +5,7 @@
 #include <BH1750.h>
 #define I2C_ADDRESS 0x76
 
+
 bool closed = true;
 bool temp_closed = false;
 bool autonomy = true;
@@ -14,6 +15,7 @@ int stepCount = 0;  // number of steps the motor has taken
 const int dirpin = 4; //HIGH is left rotation, LOW is right rotation
 const int steppin = 3;
 const int autopin = 11;
+const int hallpin = 13;
 float temperature = 20;
 float lux;
 const int MS1=8;
@@ -27,9 +29,10 @@ BMx280TwoWire bmx280(&Wire, I2C_ADDRESS);
 BH1750 lightMeter;
 void light_read(); // checking current lux value
 void temp_read(); // checking current temp
-void turn_left();
+void turn_left(); 
 void turn_right();
 void rotate(char rotate_dir, int rotations);
+void go_home();
 
 
 void setup() {
@@ -37,15 +40,17 @@ void setup() {
   Serial.begin(9600);
   pinMode(dirpin, OUTPUT);
   pinMode(steppin, OUTPUT);
+  pinMode(autopin, INPUT_PULLUP);
+  pinMode(hallpin, INPUT);
   pinMode(5, INPUT_PULLUP);
   pinMode(6, INPUT_PULLUP);
-  pinMode(autopin, INPUT_PULLUP);
   pinMode(MS1, OUTPUT);
   pinMode(MS2, OUTPUT);
   pinMode(MS3, OUTPUT);
   digitalWrite(MS1, HIGH);
   digitalWrite(MS2, HIGH);
   digitalWrite(MS3, HIGH);
+  
   while (!Serial);
   Wire.begin();
   //begin() checks the Interface, reads the sensor ID (to differentiate between BMP280 and BME280)
@@ -62,10 +67,11 @@ void setup() {
   if (bmx280.isBME280()){
     bmx280.writeOversamplingHumidity(BMx280MI::OSRS_H_x16);
   }
-  lightMeter.begin(BH1750::ONE_TIME_HIGH_RES_MODE);
-
-  Serial.println(F("BH1750 One-Time Test"));
   
+  lightMeter.begin(BH1750::ONE_TIME_HIGH_RES_MODE);
+  Serial.println(F("BH1750 One-Time Test"));
+  go_home();
+  motor_pos = 0;
 }
 
 void loop() { 
@@ -201,4 +207,10 @@ void switch_mode() {
     }
   }
   delay(50);
+}
+
+void go_home() {
+  while(digitalRead(hallpin) == LOW) {
+    rotate('l', 1/6400);
+  }
 }
