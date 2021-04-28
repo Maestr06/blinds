@@ -170,6 +170,7 @@ void turn_left() {
     }
   }
 }
+
 void pos_check() {
   if (motor_pos == 7){
     closed = false;
@@ -181,7 +182,6 @@ void pos_check() {
     temp_closed = false;
   }
 }
-
 
 void switch_mode() {
   if(digitalRead(autopin) == LOW) {
@@ -199,7 +199,6 @@ void switch_mode() {
         motor_pos = 7;
       }
     }
-    
   }
   delay(50);
 }
