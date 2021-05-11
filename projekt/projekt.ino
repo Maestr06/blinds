@@ -16,7 +16,7 @@ const int dirpin = 4; //HIGH is left rotation, LOW is right rotation
 const int steppin = 3;
 const int autopin = 11;
 const int hallpin = 12;
-float temperature;
+float temperature = 20;
 float lux;
 const int MS1=8;
 const int MS2=9;
@@ -24,17 +24,15 @@ const int MS3=10;
 const int speedofmotor = 60;
 const unsigned int rotation = 6400; // steps for one rotation on 1/32 microstep mode
 unsigned int motor_pos = 0;
-unsigned int millis_now;
-unsigned int millis_then = 0;
 
 BMx280TwoWire bmx280(&Wire, I2C_ADDRESS);
 BH1750 lightMeter;
 void light_read(); // checking current lux value
 void temp_read(); // checking current temp
-void turn_left(); 
-void turn_right();
-void rotate(char rotate_dir, float rotations);
-void go_home();
+void turn_left(); // function to continously turn left
+void turn_right(); // function to continously turn right
+void rotate(char rotate_dir, float rotations); // function that takes care of rotating by given amount of rotations
+void go_home(); // function that rotates right until it hits Hall sensor
 
 
 void setup() {
@@ -76,17 +74,10 @@ void setup() {
   motor_pos = 0;
 }
 
-void loop() {
-  millis_now = millis();
-  if (millis_now - millis_then > 3000) {
-    temp_read();
-    light_read();
-    Serial.println(motor_pos);
-    Serial.print(digitalRead(hallpin));Serial.println(analogRead(A0));
-    millis_then = millis_now;
-  }
-  
-  
+void loop() { 
+  temp_read();
+  light_read();
+  Serial.print(digitalRead(hallpin));Serial.println(analogRead(A0));
   turn_right();
   turn_left();
   switch_mode();
@@ -118,7 +109,7 @@ void loop() {
       motor_pos = 7;
     }
   }
-  
+  Serial.println(motor_pos);
 }
 
 void light_read() {
@@ -152,10 +143,8 @@ void rotate(char rotate_dir, float rotations) {
   else if (rotate_dir == right) {
     digitalWrite(dirpin, LOW);
   }
-  Serial.println(rotate_dir);Serial.println(rotation);Serial.println(rotations);
-  unsigned int amount = rotation*rotations;
-  Serial.print(amount);
-  for (int i = 0; i < amount; i++) {
+  Serial.print(rotate_dir);Serial.println(rotation*rotations);
+  for (int i = 0; i < (rotation*rotations); i++) {
     
     digitalWrite(steppin,HIGH); 
     delayMicroseconds(speedofmotor); 
@@ -191,16 +180,13 @@ void turn_left() {
 }
 
 void pos_check() {
-  if (motor_pos == 0){
-    closed = true;
-    temp_closed = false;
+  if (motor_pos == 7){
+    closed = false;
   }
   else if (motor_pos == 10){
     temp_closed = true;
-    closed = false;
   }
   else{
-    closed = false;
     temp_closed = false;
   }
 }
