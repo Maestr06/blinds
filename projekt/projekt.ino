@@ -5,7 +5,8 @@
 #include <BH1750.h>
 #define I2C_ADDRESS 0x76
 
-
+const int wifi_right = 6;
+const int wifi_left = 7;
 bool closed = true;
 bool temp_closed = false;
 bool autonomy = true;
@@ -18,9 +19,9 @@ const int autopin = 11;
 const int hallpin = 12;
 float temperature = 20;
 float lux;
-const int MS1=8;
-const int MS2=9;
-const int MS3=10;
+const int MS1 = 8;
+const int MS2 = 9;
+const int MS3 = 10;
 const int speedofmotor = 60;
 const unsigned int rotation = 6400; // steps for one rotation on 1/32 microstep mode
 unsigned int motor_pos = 0;
