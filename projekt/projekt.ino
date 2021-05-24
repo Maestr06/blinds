@@ -156,7 +156,7 @@ void rotate(char rotate_dir, float rotations) {
 }
 
 void turn_right() {
-  if (digitalRead(5) == LOW || digitalRead(wifi_right) = HIGH) {
+  if (digitalRead(5) == LOW || digitalRead(wifi_right) == HIGH) {
     if (motor_pos == 0)  {
       Serial.println("Granica zakresu!!!");
     }
@@ -169,7 +169,7 @@ void turn_right() {
 }
 
 void turn_left() {
-  if (digitalRead(6) == LOW || digitalRead(wifi_left) = HIGH) {
+  if (digitalRead(6) == LOW || digitalRead(wifi_left) == HIGH) {
     if (motor_pos == 13){
       Serial.println("Granica zakresu!!!");
     }
