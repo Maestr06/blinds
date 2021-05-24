@@ -3,8 +3,8 @@
 #include <ESP8266WiFi.h>
 const char* ssid = "k@si@123";
 const char* password = "K@si@123";
-int right = 0; // Arduino standard is GPIO13 but lolin nodeMCU is 2 http://www.esp8266.com/viewtopic.php?f=26&t=13410#p61332
-int left = 1;
+int right = 16; // Arduino standard is GPIO13 but lolin nodeMCU is 2 http://www.esp8266.com/viewtopic.php?f=26&t=13410#p61332
+int left = 5;
 WiFiServer server(80);
 void setup() {
   pinMode(left, OUTPUT);
@@ -60,20 +60,13 @@ void loop() {
  //Lolin nodeMCU has inverted the LED.
  //Low level turns on the led
  //while High level turns it off
- int value = HIGH;
  if (request.indexOf("/TURN=RIGHT") != -1) {
   digitalWrite(right, HIGH);
-  value = LOW;
-  delay(5);
-  digitalWrite(right, LOW);
-  value = HIGH;
+  digitalWrite(left, LOW);
  }
  if (request.indexOf("/TURN=LEFT") != -1) {
   digitalWrite(left, HIGH);
-  value = LOW;
-  delay(5);
-  digitalWrite(left, LOW);
-  value = HIGH;
+  digitalWrite(right, LOW);
  }
 
 // Set ledPin according to the request
@@ -88,16 +81,10 @@ void loop() {
  client.println("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
  client.println("<link rel=\"stylesheet\" href=\"https://www.w3schools.com/w3css/4/w3.css\">");
  client.println("<style>p.padding{padding-left: 0.4cm;}p{color: black;}cred{color: red}cgreen{color: green}</style>");
-
- client.print("<br><p class=\"padding\">On-Board Led is now : ");
  //High=off
  //Low=on
 
-if(value == HIGH) {
- client.print("<cred>Off</cred>");
- } else {
- client.print("<cgreen>On<cgreen></p>");
- }
+
  client.println("<div class=\"w3-container\">");
  client.println("<br>");
  client.println("<a href=\"/TURN=RIGHT\"\"><button class=\"w3-btn w3-ripple w3-green\">Turn Right </button></a>");

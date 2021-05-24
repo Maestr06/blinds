@@ -38,8 +38,8 @@ void go_home(); // function that rotates right until it hits Hall sensor
 
 void setup() {
   Serial.begin(9600);
-  pinMode(wifi_right, INPUT);
-  pinMode(wifi_left, INPUT);
+  pinMode(wifi_right, INPUT_PULLUP);
+  pinMode(wifi_left, INPUT_PULLUP);
   pinMode(dirpin, OUTPUT);
   pinMode(steppin, OUTPUT);
   pinMode(autopin, INPUT_PULLUP);
@@ -79,7 +79,9 @@ void setup() {
 void loop() { 
   temp_read();
   light_read();
-  Serial.print(digitalRead(hallpin));Serial.println(analogRead(A0));
+//  Serial.print(digitalRead(hallpin));Serial.println(analogRead(A0));
+  Serial.println(digitalRead(wifi_left));
+  Serial.println(digitalRead(wifi_right));
   turn_right();
   turn_left();
   switch_mode();
@@ -156,7 +158,7 @@ void rotate(char rotate_dir, float rotations) {
 }
 
 void turn_right() {
-  if (digitalRead(5) == LOW || digitalRead(wifi_right) == HIGH) {
+  if (digitalRead(5) == LOW || digitalRead(wifi_right) == LOW) {
     if (motor_pos == 0)  {
       Serial.println("Granica zakresu!!!");
     }
@@ -169,7 +171,7 @@ void turn_right() {
 }
 
 void turn_left() {
-  if (digitalRead(6) == LOW || digitalRead(wifi_left) == HIGH) {
+  if (digitalRead(6) == LOW || digitalRead(wifi_left) == LOW) {
     if (motor_pos == 13){
       Serial.println("Granica zakresu!!!");
     }
