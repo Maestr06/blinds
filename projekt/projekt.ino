@@ -1,12 +1,10 @@
-#include <Stepper.h>
+#include <SoftwareSerial.h>
 #include <Arduino.h>
 #include <Wire.h>
 #include <BMx280TwoWire.h>
 #include <BH1750.h>
 #define I2C_ADDRESS 0x76
 
-const int wifi_right = 7;
-const int wifi_left = 13;
 bool closed = true;
 bool temp_closed = false;
 bool autonomy = true;
@@ -23,8 +21,14 @@ const int MS1 = 8;
 const int MS2 = 9;
 const int MS3 = 10;
 const int speedofmotor = 60;
-const unsigned int rotation = 6400; // steps for one rotation on 1/32 microstep mode
+unsigned long long int rotation = 6400; // steps for one rotation on 1/32 microstep mode
 unsigned int motor_pos = 0;
+unsigned int steps = 0;
+unsigned long old_time = 0;
+unsigned long pos_time = 0;
+unsigned long read_time = 0;
+char incoming_value = 0;
+bool bt = false;
 
 BMx280TwoWire bmx280(&Wire, I2C_ADDRESS);
 BH1750 lightMeter;
@@ -35,11 +39,11 @@ void turn_right(); // function to continously turn right
 void rotate(char rotate_dir, float rotations); // function that takes care of rotating by given amount of rotations
 void go_home(); // function that rotates right until it hits Hall sensor
 
+SoftwareSerial mySerial(13, 2); // RX, TX
 
 void setup() {
+  mySerial.begin(9600);
   Serial.begin(9600);
-  pinMode(wifi_right, INPUT_PULLUP);
-  pinMode(wifi_left, INPUT_PULLUP);
   pinMode(dirpin, OUTPUT);
   pinMode(steppin, OUTPUT);
   pinMode(autopin, INPUT_PULLUP);
@@ -76,44 +80,82 @@ void setup() {
   motor_pos = 0;
 }
 
-void loop() { 
-  temp_read();
-  light_read();
+void loop() {
+  if(mySerial.available() > 0)  
+  {
+    incoming_value = mySerial.read();
+    Serial.println(incoming_value);
+    if (incoming_value == '1') {
+      bt = true;
+      turn_right();
+      bt = false;        
+    }
+    else if (incoming_value == '0') {
+      bt = true;
+      turn_left();
+      bt = false;
+    }
+    else if (incoming_value == '2') {
+      if (autonomy == true)
+        autonomy = false;
+      else
+        autonomy = true;
+    }
+    else if (incoming_value == '3') {
+      Serial.println(mySerial.print(int(lightMeter.readLightLevel())));
+      mySerial.flush();
+    }
+    else if (incoming_value == '4') {
+      mySerial.print(long(bmx280.getTemperature()));
+      mySerial.flush();
+    }
+  }
+  
+//  Serial.println(millis() - old_time);
+  if (millis() - read_time > 10000) {
+    temp_read();
+    light_read();
+    read_time = millis();
+  }
 //  Serial.print(digitalRead(hallpin));Serial.println(analogRead(A0));
-  Serial.println(digitalRead(wifi_left));
-  Serial.println(digitalRead(wifi_right));
   turn_right();
   turn_left();
   switch_mode();
   pos_check();
-  if (autonomy == true){
-    if (lux >= 200 && closed == true && temp_closed == false) {
-      rotate('l', 7);
-      closed = false;
-      motor_pos = 7;
+  if (millis() - old_time > 10000) {
+    if (autonomy == true) {
+      if (lux >= 100 && closed == true && temp_closed == false) {
+        rotate('l', 7);
+        closed = false;
+        motor_pos = 7;
+      }
+      else if (lux < 100 && closed == false && temp_closed == false) {
+        rotate('r', 7);
+        closed = true;
+        motor_pos = 0;
+      }
+      else if (lux < 100 && closed == false && temp_closed == true) {
+        rotate('r', 10);
+        closed = false;
+        motor_pos = 0;
+      }
+      else if (temperature >= 26 && closed == false && temp_closed == false) {
+        rotate('l', 3);
+        temp_closed = true;
+        motor_pos = 10;
+      }
+      else if (temperature < 26 && closed == false && temp_closed == true) {
+        rotate('r', 3);
+        temp_closed = false;
+        motor_pos = 7;
+      }
     }
-    else if (lux < 200 && closed == false && temp_closed == false) {
-      rotate('r', 7);
-      closed = true;
-      motor_pos = 0;
-    }
-    else if (lux < 200 && closed == false && temp_closed == true) {
-      rotate('r', 10);
-      closed = false;
-      motor_pos = 0;
-    }
-    else if (temperature >= 26 && closed == false && temp_closed == false) {
-      rotate('l', 3);
-      temp_closed = true;
-      motor_pos = 10;
-    }
-    else if (temperature < 26 && closed == false && temp_closed == true) {
-      rotate('r', 3);
-      temp_closed = false;
-      motor_pos = 7;
-    }
+  old_time = millis();
   }
-  Serial.println(motor_pos);
+  if (millis() - pos_time > 1000) {
+    Serial.print("Pozycja: ");Serial.println(motor_pos);
+    pos_time = millis();
+  }
 }
 
 void light_read() {
@@ -147,9 +189,11 @@ void rotate(char rotate_dir, float rotations) {
   else if (rotate_dir == right) {
     digitalWrite(dirpin, LOW);
   }
-  Serial.print(rotate_dir);Serial.println(rotation*rotations);
-  for (int i = 0; i < (rotation*rotations); i++) {
-    
+  Serial.println(int(rotation*rotations));
+  for (long i = 0; i < (rotation*rotations); i++) {
+    if (i % 1000 == 0) {
+      Serial.println(i);
+    }
     digitalWrite(steppin,HIGH); 
     delayMicroseconds(speedofmotor); 
     digitalWrite(steppin,LOW); 
@@ -158,7 +202,7 @@ void rotate(char rotate_dir, float rotations) {
 }
 
 void turn_right() {
-  if (digitalRead(5) == LOW || digitalRead(wifi_right) == LOW) {
+  if (digitalRead(5) == LOW || bt == true) {
     if (motor_pos == 0)  {
       Serial.println("Granica zakresu!!!");
     }
@@ -171,7 +215,7 @@ void turn_right() {
 }
 
 void turn_left() {
-  if (digitalRead(6) == LOW || digitalRead(wifi_left) == LOW) {
+  if (digitalRead(6) == LOW || bt == true) {
     if (motor_pos == 13){
       Serial.println("Granica zakresu!!!");
     }
@@ -199,9 +243,13 @@ void switch_mode() {
   if(digitalRead(autopin) == LOW) {
     if (autonomy == true){
       autonomy = false;
+      mySerial.print(long(bmx280.getTemperature()));
+      mySerial.flush();
     }
     else if (autonomy == false){
       autonomy = true;
+      mySerial.print(long(bmx280.getTemperature()));
+      mySerial.flush();
       go_home();
     }
   }
