@@ -44,6 +44,7 @@ SoftwareSerial mySerial(13, 2); // RX, TX
 void setup() {
   mySerial.begin(9600);
   Serial.begin(9600);
+  pinMode(A1, INPUT);
   pinMode(dirpin, OUTPUT);
   pinMode(steppin, OUTPUT);
   pinMode(autopin, INPUT_PULLUP);
@@ -96,13 +97,12 @@ void loop() {
       bt = false;
     }
     else if (incoming_value == '2') {
-      if (autonomy == true)
-        autonomy = false;
-      else
-        autonomy = true;
+      Serial.println(autonomy);
+      autonomy = true;
+      go_home();
     }
     else if (incoming_value == '3') {
-      Serial.println(mySerial.print(int(lightMeter.readLightLevel())));
+      mySerial.print(int(lightMeter.readLightLevel()));
       mySerial.flush();
     }
     else if (incoming_value == '4') {
@@ -118,6 +118,15 @@ void loop() {
     read_time = millis();
   }
 //  Serial.print(digitalRead(hallpin));Serial.println(analogRead(A0));
+  if (digitalRead(A1) == HIGH && closed == true) {
+    rotate('l', 7);
+    closed = false;
+    autonomy = false;
+  }
+  else if (digitalRead(A1) == HIGH && closed == false) {
+    go_home();
+    autonomy = false;
+  }
   turn_right();
   turn_left();
   switch_mode();
@@ -222,7 +231,7 @@ void turn_left() {
      else {
       rotate('l', 1);
       motor_pos++;
-      autonomy = false;
+      autonomy = false;D
     }
   }
 }
